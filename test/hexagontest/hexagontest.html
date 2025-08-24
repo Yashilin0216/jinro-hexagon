@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hex Grid Movement (Vue 3 + SVG)</title>
+  <link href="./css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <div id="app" class="wrap">
+    <header>
+      <h1>Hex Grid Movement — Vue 3 + SVG（クリック & キーボード移動対応）</h1>
+    </header>
+
+    <div class="board" tabindex="0" @keydown="on_key" ref="board_ref">
+      <div class="hud">
+        <div>選択: q={{ selected.q }}, r={{ selected.r }}</div>
+        <div>サイズ: {{ cfg.map_cols }} × {{ cfg.map_rows }} ／ タイル半径: {{ cfg.hex_size }}</div>
+        <div style="margin-top:6px">キー: Q W E / A S D（六方向移動）、矢印キー＝スクロール</div>
+        <div class="legend">
+          <span class="chip tile"></span> タイル
+          <span class="chip hover"></span> ホバー
+          <span class="chip active"></span> 現在位置
+        </div>
+      </div>
+
+      <!-- SVG board -->
+      <svg :viewBox="view_box" @mousemove="on_mouse_move" @mouseleave="hover=null" @click="on_click">
+        <defs>
+          <radialGradient id="g-active" cx="50%" cy="45%" r="70%">
+            <stop offset="0%" stop-color="#ffe8b2" stop-opacity="1" />
+            <stop offset="100%" stop-color="#f6c85f" stop-opacity="1" />
+          </radialGradient>
+          <linearGradient id="g-tile" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a4b7a" />
+            <stop offset="100%" stop-color="#1e2a4e" />
+          </linearGradient>
+          <linearGradient id="g-hover" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#7ea0ff" />
+            <stop offset="100%" stop-color="#5e7ce2" />
+          </linearGradient>
+        </defs>
+
+        <g :transform="`translate(${camera.x} ${camera.y})`">
+          <!-- tiles -->
+          <template v-for="row in grid">
+            <template v-for="cell in row">
+              <polygon
+                class="tile"
+                :key="`p-${cell.q}-${cell.r}`"
+                :points="hex_points(cell.x, cell.y)"
+                :fill="tile_fill(cell)"
+                :stroke="is_selected(cell) ? '#ffe38a' : 'rgba(255,255,255,0.18)'"
+                :stroke-width="is_selected(cell) ? 2 : 1"
+                @mouseenter="hover = { q: cell.q, r: cell.r }"
+              />
+              <text :x="cell.x" :y="cell.y+3" text-anchor="middle" class="tile-label">{{ cell.q }},{{ cell.r }}</text>
+            </template>
+          </template>
+
+          <!-- player marker -->
+          <circle :cx="pos_px.x" :cy="pos_px.y" :r="cfg.hex_size*0.45" fill="url(#g-active)" stroke="#704d00" stroke-width="1" />
+        </g>
+      </svg>
+    </div>
+
+    <footer>
+      クリックでそのマスへ移動。Q/W/E/A/S/D で隣接ヘクスへ移動。矢印キーでスクロール（カメラ移動）。
+    </footer>
+  </div>
+
+  <!-- Vue 3 via CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- socket.io client (将来的な同期用。未使用なら削除可) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-kctw6FnkYQnHn3pQfZq+zT9r2n7lL2o0qAH9wQFqD3l7WQ8SRZc4m1Hk9m4iI9Hf" crossorigin="anonymous"></script>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>
