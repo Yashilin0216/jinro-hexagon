@@ -4,7 +4,7 @@ const { createApp, ref, reactive, computed, onMounted } = Vue;
 // 行動制限用クラス
 import { RadiusRestriction } from "./move_restrictions.js";
 
-// urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture
+// urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture move_condition_check()で実際の論理値判定
 // 3マス動ける
 const three_restriction = new RadiusRestriction(3, "three_restriction");
 // 1マス動ける
@@ -162,8 +162,6 @@ createApp({
       { q: 0,  r: +1 }, // 南東
     ];
 
-    // 値を範囲内に制限
-    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
     // 指定セルが現在選択されているか判定
     function is_selected(cell) { return cell.q === selected.q && cell.r === selected.r; }
@@ -223,6 +221,8 @@ createApp({
       console.log(player);
     }
 
+
+    // urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture
     function move_condition_check(player, target, move_condition){
       return(
           three_restriction.canMove(player, target, move_condition) ||
