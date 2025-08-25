@@ -99,6 +99,13 @@ io.of('/game').on("connection", (socket) => {
     io.of('/game').to(player.room).emit("turn", { current: order[turnIndex[player.room]] });
   });
 
+  //killイベント
+  socket.on("kill", () => {
+    const player = gamePlayers[socket.id];
+    console.log(player);
+    socket.to(player.room).emit("kill", { playerId: socket.id, name: player.name, is_alive: false });
+  })
+
   // 切断時
   socket.on("disconnect", () => {
     if (gamePlayers[socket.id]) {

@@ -96,6 +96,10 @@ socket.on("move", (data) => {
   }
 });
 
+socket.on("kill",(data) =>{
+  console.log(players[data.playerId].name+"が死にました。")
+})
+
 // 他プレイヤー切断
 socket.on("player_disconnect", (data) => {
   delete players[data.playerId];
@@ -230,6 +234,7 @@ const vm = createApp({
           socket.emit("move", { q: ar.q, r: ar.r });
         }
       }
+      if(!player.is_alive) console.log("死んでいます")
       console.log(players);
       console.log(player);
     }
@@ -241,6 +246,12 @@ const vm = createApp({
           three_restriction.canMove(player, target, move_condition) ||
           one_restriction.canMove(player, target, move_condition)
       );
+    }
+
+    //playerを殺す関数
+    function kill_player(){
+      player.is_alive = false;
+      socket.emit("kill")
     }
 
     // 描画時に他プレイヤーも表示 
@@ -311,7 +322,7 @@ const vm = createApp({
 
     return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼
-            players, render_players, move_condition_check 
+            players, render_players, move_condition_check, kill_player
      };
   }
 }).mount('#app');
