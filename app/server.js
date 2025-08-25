@@ -90,7 +90,7 @@ io.of('/game').on("connection", (socket) => {
       return;
     }
 
-    //正常ならターンを次へ回す
+    //正常なら動く
     player.q = data.q; player.r = data.r;
     socket.to(player.room).emit('move', { playerId: socket.id, q: data.q, r: data.r });
 

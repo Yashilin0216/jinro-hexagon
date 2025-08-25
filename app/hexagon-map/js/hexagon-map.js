@@ -36,8 +36,16 @@ const highlight_radius = ref(5); // 半径 中心除いてｎマス 中心入れ
 
 
 // 自分のプレイヤー情報を定義 
-
-const player = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2, name: urlName , move_condition: urlMoveCondition});
+const player = reactive({ 
+  // 初期座標
+  q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2, 
+  // ユーザーネーム
+  name: urlName, 
+  // 移動制限
+  move_condition: urlMoveCondition,
+  // 生きてるか判定 
+  is_alive: true
+});
 
 // 他プレイヤー一覧
 const players = reactive({});
@@ -51,10 +59,14 @@ let currentTurn = ref(null);
 socket.emit("join", {
      roomId: urlRoomId, 
      name: urlName,
+     // プレイヤーの移動制限
      move_condition: urlMoveCondition,
-     q: player.q,       // クライアント側初期位置を送信するパラメータを追加
-     r: player.r
-    });
+     // プレイヤーの座標
+     q: player.q,      
+     r: player.r,
+     // 生きてるか判定
+     is_alive: player.is_alive
+});
 
 // サーバーから現在のターン情報を受信
 socket.on("turn", (data) => {
@@ -92,7 +104,8 @@ socket.on("player_disconnect", (data) => {
 
 
 // Vue 3 アプリの作成
-createApp({
+//const vm = はデバッグ用につけた。別にいらない。
+const vm = createApp({
   setup() {
 
     // 盤面配列を生成する計算プロパティ distance()で中心;highlight_centerから半径;highlight_radiusまでの距離のみ表示している
@@ -152,7 +165,7 @@ createApp({
       return hex_corners(cx, cy, cfg.hex_size).map(p => p.join(',')).join(' ');
     }
 
-    // 六方向ベクトル（axial座標）
+    // 六方向ベクトル（axial座標）これ一応残す 使いそう
     const dirs = [
       { q: +1, r: 0 },  // 東
       { q: +1, r: -1 }, // 北東
@@ -228,8 +241,8 @@ createApp({
           three_restriction.canMove(player, target, move_condition) ||
           one_restriction.canMove(player, target, move_condition)
       );
-      
     }
+
     // 描画時に他プレイヤーも表示 
     // socket用に追加
     function render_players(cell) {
@@ -302,3 +315,26 @@ createApp({
      };
   }
 }).mount('#app');
+
+// --- デバッグUIの処理 --- const vm = createAppのとこもデバッグ用で追加してる
+// デバッグ用に window に登録
+window.vm = vm;
+const debugInput = document.getElementById("debug-input");
+const debugRun   = document.getElementById("debug-run");
+const debugConsole = document.getElementById("debug-console");
+const debugToggle  = document.getElementById("debug-toggle");
+
+debugRun.addEventListener("click", () => {
+  const code = debugInput.value;
+  try {
+    const result = eval(code); // ← 注意: evalはデバッグ専用
+    console.log("Debug result:", result);
+  } catch (err) {
+    console.error("Debug error:", err);
+  }
+});
+
+debugToggle.addEventListener("click", () => {
+  debugConsole.style.display = (debugConsole.style.display === "none" ? "block" : "none");
+});
+// --- デバッグUIの処理 ---
