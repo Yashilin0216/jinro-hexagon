@@ -183,19 +183,19 @@ createApp({
     //   const nr = clamp(selected.r + dirs[i].r, 0, cfg.map_size - 1); // rを範囲内に制限
     //   selected.q = nq; selected.r = nr; // 選択セル更新
     // }
-    
+    // キーボード移動の際の判定用 そのうち消す
     // 選択セルを指定方向に移動する is_boundsでいけるとこ判定
-    function move_dir(i) {
-    const nq = selected.q + dirs[i].q;
-    const nr = selected.r + dirs[i].r;
-    if (in_bounds(nq, nr)) {
-        selected.q = nq;
-        selected.r = nr;
+    // function move_dir(i) {
+    // const nq = selected.q + dirs[i].q;
+    // const nr = selected.r + dirs[i].r;
+    // if (in_bounds(nq, nr)) {
+    //     selected.q = nq;
+    //     selected.r = nr;
     
-        // ▼▼▼ 追加：自分の位置をサーバーに送信 ▼▼▼
-        socket.emit("move", { q: nq, r: nr });
-    }
-    }
+    //     // ▼▼▼ 追加：自分の位置をサーバーに送信 ▼▼▼
+    //     socket.emit("move", { q: nq, r: nr });
+    // }
+    // }
 
     // 値を範囲内に制限
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
