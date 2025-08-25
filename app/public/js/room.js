@@ -1,5 +1,6 @@
 const room = document.getElementById("room");
 const user_name = document.getElementById("user_name");
+const move_condition = document.getElementById("move_conditions");
 
 document.getElementById("room-post").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -15,5 +16,7 @@ document.getElementById("room-post").addEventListener("submit", (e) => {
     "game?roomId=" +
     Math.floor(room.value) +
     "&name=" +
-    user_name.value;
+    user_name.value +
+    "&move_condition=" + 
+    move_condition.value;
 });

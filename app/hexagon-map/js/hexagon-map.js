@@ -3,7 +3,12 @@ const { createApp, ref, reactive, computed, onMounted } = Vue;
 
 // 行動制限用クラス
 import { RadiusRestriction } from "./move_restrictions.js";
-const three_restriction = new RadiusRestriction(3);
+
+// urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture
+// 3マス動ける
+const three_restriction = new RadiusRestriction(3, "three_restriction");
+// 1マス動ける
+const one_restriction = new RadiusRestriction(1, "one_restriction");
 
 
 // ソケット接続を/game namespace 
@@ -19,6 +24,7 @@ const url = new URL(window.location.href);
 const params = url.searchParams;
 const urlRoomId = parseInt(params.get("roomId")) || 0;
 const urlName = params.get("name") || "player";
+const urlMoveCondition = params.get("move_condition");
 
 // 設定値（反応型）
 const cfg = reactive({ hex_size: 28, map_size: 11, margin: 24 }); // 六角形サイズ・盤面列数・行数・余白
@@ -31,7 +37,7 @@ const highlight_radius = ref(5); // 半径 中心除いてｎマス 中心入れ
 
 // 自分のプレイヤー情報を定義 
 
-const player = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2, name: urlName });
+const player = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2, name: urlName , move_condition: urlMoveCondition});
 
 // 他プレイヤー一覧
 const players = reactive({});
@@ -45,6 +51,7 @@ let currentTurn = ref(null);
 socket.emit("join", {
      roomId: urlRoomId, 
      name: urlName,
+     move_condition: urlMoveCondition,
      q: player.q,       // クライアント側初期位置を送信するパラメータを追加
      r: player.r
     });
@@ -220,25 +227,25 @@ createApp({
     // SVGボード参照
     const board_ref = ref(null);
 
-    // キーボード入力処理
-    function on_key(e) {
-      if (e.key.startsWith('Arrow')) { // 矢印キーでカメラ移動
-        const step = 24;
-        if (e.key === 'ArrowLeft') camera.x += step;
-        if (e.key === 'ArrowRight') camera.x -= step;
-        if (e.key === 'ArrowUp') camera.y += step;
-        if (e.key === 'ArrowDown') camera.y -= step;
-        e.preventDefault(); // デフォルトのスクロール抑制
-        return;
-      }
-      const k = e.key.toLowerCase(); // 六方向移動キー
-      if (k === 'w') move_dir(0);
-      else if (k === 'e') move_dir(1);
-      else if (k === 'q') move_dir(2);
-      else if (k === 's') move_dir(3);
-      else if (k === 'a') move_dir(4);
-      else if (k === 'd') move_dir(5);
-    }
+    // キーボード入力処理 デバッグ用 そのうち消す
+    // function on_key(e) {
+    //   if (e.key.startsWith('Arrow')) { // 矢印キーでカメラ移動
+    //     const step = 24;
+    //     if (e.key === 'ArrowLeft') camera.x += step;
+    //     if (e.key === 'ArrowRight') camera.x -= step;
+    //     if (e.key === 'ArrowUp') camera.y += step;
+    //     if (e.key === 'ArrowDown') camera.y -= step;
+    //     e.preventDefault(); // デフォルトのスクロール抑制
+    //     return;
+    //   }
+    //   const k = e.key.toLowerCase(); // 六方向移動キー
+    //   if (k === 'w') move_dir(0);
+    //   else if (k === 'e') move_dir(1);
+    //   else if (k === 'q') move_dir(2);
+    //   else if (k === 's') move_dir(3);
+    //   else if (k === 'a') move_dir(4);
+    //   else if (k === 'd') move_dir(5);
+    // }
 
     // マウス移動イベント処理（ホバー判定）
     function on_mouse_move(evt) {
@@ -260,15 +267,25 @@ createApp({
       }
       
       // is_bondsで盤面か判断。three_restriction.canMoveで半径3以内か判定
-      if (in_bounds(ar.q, ar.r) && three_restriction.canMove(player, { q: ar.q, r: ar.r },player.name)) { 
-        // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
-        selected.q = ar.q; selected.r = ar.r; 
-        player.q = ar.q; player.r = ar.r;
-        // ▼▼▼ 追加：サーバーに送信 ▼▼▼
-        socket.emit("move", { q: ar.q, r: ar.r });
+      if (in_bounds(ar.q, ar.r)) {
+        if(move_condition_check(player, { q: ar.q, r: ar.r }, player.move_condition)){
+          // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
+          selected.q = ar.q; selected.r = ar.r; 
+          player.q = ar.q; player.r = ar.r;
+          // ▼▼▼ 追加：サーバーに送信 ▼▼▼
+          socket.emit("move", { q: ar.q, r: ar.r });
+        }
       }
       console.log(players);
       console.log(player);
+    }
+
+    function move_condition_check(player, target, move_condition){
+      return(
+          three_restriction.canMove(player, target, move_condition) ||
+          one_restriction.canMove(player, target, move_condition)
+      );
+      
     }
     // 描画時に他プレイヤーも表示 
     // socket用に追加
@@ -338,9 +355,9 @@ createApp({
     // マウント時にボードにフォーカスを当てる
     onMounted(() => { board_ref.value && board_ref.value.focus(); });
 
-    return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_key, on_mouse_move, on_click, board_ref,axial_to_pixel,
+    return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼
-            players, render_players 
+            players, render_players, move_condition_check 
      };
   }
 }).mount('#app');
