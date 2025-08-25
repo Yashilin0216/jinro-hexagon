@@ -80,18 +80,6 @@ io.of('/game').on("connection", (socket) => {
 
   // 移動イベント
   socket.on("move", (data) => {
-    // ターン制ないときの無条件で動く処理 そのうち消す
-    // if (gamePlayers[socket.id]) {
-    //   gamePlayers[socket.id].q = data.q;
-    //   gamePlayers[socket.id].r = data.r;
-    //   socket.to(gamePlayers[socket.id].room).emit('move', {
-    //     playerId: socket.id,
-    //     q: data.q,
-    //     r: data.r
-    //   });
-    // }
-
-
     //「本人のターンか」を厳密チェック
     const player = gamePlayers[socket.id];
     const order  = turnOrder[player.room];

@@ -95,21 +95,6 @@ socket.on("player_disconnect", (data) => {
 createApp({
   setup() {
 
-
-    // 盤面配列を生成する計算プロパティ 矩形バージョン そのうち消す
-    // const grid = computed(() => {
-    //   const rows = [];
-    //   for (let r = 0; r < cfg.map_size; r++) { // 行ループ
-    //     const row = [];
-    //     for (let q = 0; q < cfg.map_size; q++) { // 列ループ
-    //       const px = axial_to_pixel(q, r, cfg.hex_size); // 六角座標をピクセル座標に変換
-    //       row.push({ q, r, x: px.x + cfg.margin, y: px.y + cfg.margin }); // タイル情報を格納
-    //     }
-    //     rows.push(row); // 行を追加
-    //   }
-    //   return rows;
-    // });
-
     // 盤面配列を生成する計算プロパティ distance()で中心;highlight_centerから半径;highlight_radiusまでの距離のみ表示している
     const grid = computed(() => {
     const rows = [];
@@ -177,26 +162,6 @@ createApp({
       { q: 0,  r: +1 }, // 南東
     ];
 
-    // 選択セルを指定方向に移動する そのうち消す
-    // function move_dir(i) {
-    //   const nq = clamp(selected.q + dirs[i].q, 0, cfg.map_size - 1); // qを範囲内に制限
-    //   const nr = clamp(selected.r + dirs[i].r, 0, cfg.map_size - 1); // rを範囲内に制限
-    //   selected.q = nq; selected.r = nr; // 選択セル更新
-    // }
-    // キーボード移動の際の判定用 そのうち消す
-    // 選択セルを指定方向に移動する is_boundsでいけるとこ判定
-    // function move_dir(i) {
-    // const nq = selected.q + dirs[i].q;
-    // const nr = selected.r + dirs[i].r;
-    // if (in_bounds(nq, nr)) {
-    //     selected.q = nq;
-    //     selected.r = nr;
-    
-    //     // ▼▼▼ 追加：自分の位置をサーバーに送信 ▼▼▼
-    //     socket.emit("move", { q: nq, r: nr });
-    // }
-    // }
-
     // 値を範囲内に制限
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -218,34 +183,12 @@ createApp({
     function tile_fill(cell) {
       if (is_selected(cell)) return 'url(#g-active)';
       if (is_hover(cell)) return 'url(#g-hover)';
-
-      // 半径Rマス以内なら緑に染める テスト用に矩形で作った中から半径ｒで緑に染めた。そのうち消す
-      // if (distance(cell, highlight_center) <= highlight_radius.value) return 'green';
       return 'url(#g-tile)';
     }
 
     // SVGボード参照
     const board_ref = ref(null);
 
-    // キーボード入力処理 デバッグ用 そのうち消す
-    // function on_key(e) {
-    //   if (e.key.startsWith('Arrow')) { // 矢印キーでカメラ移動
-    //     const step = 24;
-    //     if (e.key === 'ArrowLeft') camera.x += step;
-    //     if (e.key === 'ArrowRight') camera.x -= step;
-    //     if (e.key === 'ArrowUp') camera.y += step;
-    //     if (e.key === 'ArrowDown') camera.y -= step;
-    //     e.preventDefault(); // デフォルトのスクロール抑制
-    //     return;
-    //   }
-    //   const k = e.key.toLowerCase(); // 六方向移動キー
-    //   if (k === 'w') move_dir(0);
-    //   else if (k === 'e') move_dir(1);
-    //   else if (k === 'q') move_dir(2);
-    //   else if (k === 's') move_dir(3);
-    //   else if (k === 'a') move_dir(4);
-    //   else if (k === 'd') move_dir(5);
-    // }
 
     // マウス移動イベント処理（ホバー判定）
     function on_mouse_move(evt) {
@@ -300,8 +243,6 @@ createApp({
       return arr;
     }
 
-    // 指定座標が盤面内か判定 そのうち消す
-    // function in_bounds(q, r) { return q >= 0 && q < cfg.map_size && r >= 0 && r < cfg.map_size; }
 
     // 指定座標が盤面内か判定
     function in_bounds(q, r) {
