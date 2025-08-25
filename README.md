@@ -1,4 +1,4 @@
-# jnro-hexagon
+# jinro-hexagon
 ## どんなものが作りたいか
 ![alt text](image.png)
 六角形の盤面・ターン制での人狼ゲーム的な物を作りたい
