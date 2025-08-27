@@ -97,7 +97,12 @@ socket.on("move", (data) => {
 });
 
 socket.on("kill",(data) =>{
-  console.log(players[data.playerId].name+"が死にました。")
+  // playersはあくまで他のプレイヤーのリストで自分は含まれないのでこのような処理となる
+  if(socket.id != data.playerId){
+    console.log(players[data.playerId].name+"が死にました。")
+  }else{
+    console.log(player.name+"が死にました。(殺された)")
+  }
 })
 
 // 他プレイヤー切断
@@ -248,10 +253,29 @@ const vm = createApp({
       );
     }
 
-    //playerを殺す関数
-    function kill_player(){
+    //自分を殺す関数
+    // 自分のプレイヤー情報にはsocket.idが入ってない
+    function kill_mine(){
       player.is_alive = false;
-      socket.emit("kill")
+      console.log("kill_mine: "+socket.id)
+      socket.emit("kill", {playerId: socket.id})
+    }
+
+    // 他のプレイヤーを殺す関数
+    function kill_player(playerId){
+      players[playerId].is_alive = false;
+      console.log("kill_player: "+playerId)
+      socket.emit("kill", {playerId: playerId})
+    }
+
+    // プレイヤーネームから他のプレイヤーのプレイヤーid(socketid)を特定する関数
+    // Object.keys(players) オブジェクトのキー一覧（["player1", "player2", "player3"]）を返す
+    // .find(callback) 配列の中から「条件に合う最初の要素」を返す。
+    function identify_id(name){
+      const playerId = Object.keys(players).find(
+        id => players[id].name === name
+      );
+      return playerId;
     }
 
     // 描画時に他プレイヤーも表示 
@@ -322,7 +346,7 @@ const vm = createApp({
 
     return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼
-            players, render_players, move_condition_check, kill_player
+            players, render_players, move_condition_check, kill_player, kill_mine, identify_id
      };
   }
 }).mount('#app');

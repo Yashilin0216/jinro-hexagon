@@ -100,10 +100,10 @@ io.of('/game').on("connection", (socket) => {
   });
 
   //killイベント
-  socket.on("kill", () => {
-    const player = gamePlayers[socket.id];
+  socket.on("kill", (data) => {
+    const player = gamePlayers[data.playerId];
     console.log(player);
-    socket.to(player.room).emit("kill", { playerId: socket.id, name: player.name, is_alive: false });
+    socket.to(player.room).emit("kill", { playerId: data.playerId, name: player.name, is_alive: false });
   })
 
   // 切断時
