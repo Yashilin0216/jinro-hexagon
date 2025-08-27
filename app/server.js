@@ -53,17 +53,17 @@ io.of('/game').on("connection", (socket) => {
   // プレイヤー参加
   socket.on("join", (msg) => {
     // msg = { roomId, name }
-    gamePlayers[socket.id] = { room: msg.roomId, name: msg.name, q: msg.q, r: msg.r };
+    gamePlayers[socket.id] = { room: msg.roomId, name: msg.name, q: msg.q, r: msg.r, is_alive: msg.is_alive };
     socket.join(msg.roomId);
 
     // 同じルームの他プレイヤー情報を新規参加者に送信
     const others = Object.entries(gamePlayers)
       .filter(([id, p]) => p.room === msg.roomId && id !== socket.id)
-      .map(([id, p]) => ({ playerId: id, q: p.q, r: p.r, name: p.name }));
+      .map(([id, p]) => ({ playerId: id, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive  }));
     socket.emit('init_players', others);
 
     // 既存プレイヤーに新規参加者情報を通知
-    socket.to(msg.roomId).emit('init_players', [{ playerId: socket.id, q: msg.q, r: msg.r, name: msg.name }]);
+    socket.to(msg.roomId).emit('init_players', [{ playerId: socket.id, q: msg.q, r: msg.r, name: msg.name, is_alive: msg.is_alive }]);
 
     //ターン順を辞書順で管理
     const names = Object.values(gamePlayers)
@@ -90,10 +90,13 @@ io.of('/game').on("connection", (socket) => {
       return;
     }
 
-    //正常なら動く
-    player.q = data.q; player.r = data.r;
-    socket.to(player.room).emit('move', { playerId: socket.id, q: data.q, r: data.r });
-
+    if(player.is_alive){
+      //ターン正常で生きてるなら動く
+      player.q = data.q; player.r = data.r;
+      socket.to(player.room).emit('move', { playerId: socket.id, q: data.q, r: data.r });
+    }else{
+      console.log("死亡動けない判定")
+    }
     // ターンを次に進める
     turnIndex[player.room] = (turnIndex[player.room] + 1) % order.length;
     io.of('/game').to(player.room).emit("turn", { current: order[turnIndex[player.room]] });
@@ -102,6 +105,7 @@ io.of('/game').on("connection", (socket) => {
   //killイベント
   socket.on("kill", (data) => {
     const player = gamePlayers[data.playerId];
+    player.is_alive = false;
     console.log(player);
     socket.to(player.room).emit("kill", { playerId: data.playerId, name: player.name, is_alive: false });
   })

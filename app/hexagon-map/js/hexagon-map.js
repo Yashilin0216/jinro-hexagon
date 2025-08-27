@@ -99,8 +99,12 @@ socket.on("move", (data) => {
 socket.on("kill",(data) =>{
   // playersはあくまで他のプレイヤーのリストで自分は含まれないのでこのような処理となる
   if(socket.id != data.playerId){
+    //殺した人間と殺された人間以外はここで死亡判定 kill_playerの処理はいらないかも
+    players[data.playerId].is_alive = false;
     console.log(players[data.playerId].name+"が死にました。")
   }else{
+    //別プレイヤーから自分が殺されたときはここで死亡判定
+    player.is_alive = false;
     console.log(player.name+"が死にました。(殺された)")
   }
 })
@@ -232,9 +236,14 @@ const vm = createApp({
       // is_bondsで盤面か判断。three_restriction.canMoveで半径3以内か判定
       if (in_bounds(ar.q, ar.r)) {
         if(move_condition_check(player, { q: ar.q, r: ar.r }, player.move_condition)){
-          // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
-          selected.q = ar.q; selected.r = ar.r; 
-          player.q = ar.q; player.r = ar.r;
+          if(player.is_alive){
+            // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
+            selected.q = ar.q; selected.r = ar.r; 
+            player.q = ar.q; player.r = ar.r;
+          }else{
+            console.log("死亡しているので動けません")
+          }
+          //死亡している場合更新せずに動く処理が行われるが、サーバー側でも更新されないので問題なし
           // ▼▼▼ 追加：サーバーに送信 ▼▼▼
           socket.emit("move", { q: ar.q, r: ar.r });
         }
@@ -269,6 +278,7 @@ const vm = createApp({
     }
 
     // プレイヤーネームから他のプレイヤーのプレイヤーid(socketid)を特定する関数
+    // 自分には使えない
     // Object.keys(players) オブジェクトのキー一覧（["player1", "player2", "player3"]）を返す
     // .find(callback) 配列の中から「条件に合う最初の要素」を返す。
     function identify_id(name){
