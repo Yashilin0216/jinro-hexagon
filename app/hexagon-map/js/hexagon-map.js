@@ -33,6 +33,7 @@ const selected = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 
 const hover = ref(null); // ホバー中のセル情報
 const highlight_center = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 中心セル 色付けテスト用（緑）
 const highlight_radius = ref(5); // 半径 中心除いてｎマス 中心入れてn+1マス 色付けテスト用（緑）
+const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" または "night"）
 
 
 // 自分のプレイヤー情報を定義 
@@ -292,6 +293,25 @@ const vm = createApp({
       return playerId;
     }
 
+    // 背景を切り替える関数
+    function updateBackground() {
+      if (phase.value === "day") {
+        document.body.style.background = "#ffffff"; // 白
+        document.body.style.color = "#000000";
+      } else {
+        document.body.style.background = "#000000"; // 黒
+        document.body.style.color = "#ffffff";
+      }
+    }
+
+    // フェーズをトグル（切り替え）
+    function togglePhase() {
+      phase.value = (phase.value === "day" ? "night" : "day");
+      updateBackground();
+      // サーバーに現在のフェーズを送信
+      // socket.emit("changePhase", { phase: phase.value });
+    }
+
     // 描画時に他プレイヤーも表示 
     // socket用に追加
     function render_players(cell) {
@@ -360,7 +380,7 @@ const vm = createApp({
 
     return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼
-            players, render_players, move_condition_check, kill_player, kill_mine, identify_id
+            players, render_players, move_condition_check, kill_player, kill_mine, identify_id, phase, togglePhase, updateBackground
      };
   }
 }).mount('#app');
@@ -386,4 +406,5 @@ debugRun.addEventListener("click", () => {
 debugToggle.addEventListener("click", () => {
   debugConsole.style.display = (debugConsole.style.display === "none" ? "block" : "none");
 });
+// vm.kill_player(vm.identify_id("user1")); debug用殺害処理
 // --- デバッグUIの処理 ---

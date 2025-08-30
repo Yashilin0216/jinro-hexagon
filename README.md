@@ -24,6 +24,8 @@
     - マップメイン処理
 - app/hexagon-map/js/move_restrictions.js
     - プレイヤーの動きを制限
+- app/hexagon-map/js/role_restrictions.js
+    - プレイヤーのキル・防御を制限
 - app/index.html
     - ルーム
 - app/hexagon-map/hexagon-map.html
