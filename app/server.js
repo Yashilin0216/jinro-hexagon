@@ -108,6 +108,23 @@ io.of('/game').on("connection", (socket) => {
     player.is_alive = false;
     console.log(player);
     socket.to(player.room).emit("kill", { playerId: data.playerId, name: player.name, is_alive: false });
+
+    // 死亡した際、ターンの中から除外する
+    const room = player.room;
+    delete gamePlayers[data.playerId];
+    io.of('/game').to(room).emit('player_death', { playerId: data.playerId});
+
+
+    // 死んだプレイヤーを除いて順番を組み直し
+    const names = Object.values(gamePlayers)
+      .filter(p => p.room === room)
+      .map(p => p.name)
+      .sort((a, b) => a.localeCompare(b));
+    turnOrder[room] = names;
+    if (turnIndex[room] >= names.length) turnIndex[room] = 0;
+
+    io.of('/game').to(room).emit("turn", { current: names[turnIndex[room]] });
+    
   })
 
   // 切断時

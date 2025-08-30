@@ -114,6 +114,10 @@ socket.on("player_disconnect", (data) => {
   delete players[data.playerId];
 });
 
+// 他プレイヤー死亡。今のところ切断の処理と同じ
+socket.on("player_death", (data) =>{
+  delete players[data.playerId];
+})
 
 
 // Vue 3 アプリの作成
