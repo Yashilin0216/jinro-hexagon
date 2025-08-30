@@ -120,6 +120,11 @@ socket.on("player_death", (data) =>{
   delete players[data.playerId];
 })
 
+// サーバーからフェーズ変更を受信
+socket.on("phaseChanged", (msg) => {
+  phase.value = msg.phase;
+  vm.updateBackground();
+});
 
 // Vue 3 アプリの作成
 //const vm = はデバッグ用につけた。別にいらない。
@@ -309,7 +314,7 @@ const vm = createApp({
       phase.value = (phase.value === "day" ? "night" : "day");
       updateBackground();
       // サーバーに現在のフェーズを送信
-      // socket.emit("changePhase", { phase: phase.value });
+      socket.emit("changePhase", { phase: phase.value });
     }
 
     // 描画時に他プレイヤーも表示 
@@ -377,6 +382,11 @@ const vm = createApp({
 
     // マウント時にボードにフォーカスを当てる
     onMounted(() => { board_ref.value && board_ref.value.focus(); });
+
+    // 背景を更新
+    onMounted(() => {
+      updateBackground();
+    });
 
     return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼

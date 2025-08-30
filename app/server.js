@@ -127,6 +127,15 @@ io.of('/game').on("connection", (socket) => {
     
   })
 
+  // フェーズ切り替えを受信
+  socket.on("changePhase", (msg) => {
+    const player = gamePlayers[socket.id];
+    const room = player.room;
+    console.log("phase changed to", msg.phase);
+    // 全クライアントに通知
+    io.of('/game').to(room).emit("phaseChanged", msg);
+  });
+
   // 切断時
   socket.on("disconnect", () => {
     if (gamePlayers[socket.id]) {
