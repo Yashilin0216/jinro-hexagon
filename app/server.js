@@ -52,6 +52,10 @@ io.of('/game').on("connection", (socket) => {
 
   // プレイヤー参加
   socket.on("join", (msg) => {
+
+    // phaseを初期化し、クライアント側から来たフェーズを代入
+    if (!global.phase) global.phase = {};
+    global.phase[msg.roomId] = msg.phase;
     // msg = { roomId, name }
     gamePlayers[socket.id] = { room: msg.roomId, name: msg.name, q: msg.q, r: msg.r, is_alive: msg.is_alive };
     socket.join(msg.roomId);
@@ -97,9 +101,34 @@ io.of('/game').on("connection", (socket) => {
     }else{
       console.log("死亡動けない判定")
     }
-    // ターンを次に進める
+    // ルームごとにターン経過数を管理 turnCounter初期化
+    if (!global.turnCounter) global.turnCounter = {};
+    if (!(player.room in global.turnCounter)) global.turnCounter[player.room] = 0;
+
+    // ターンを進める
     turnIndex[player.room] = (turnIndex[player.room] + 1) % order.length;
     io.of('/game').to(player.room).emit("turn", { current: order[turnIndex[player.room]] });
+
+    // 1巡終わったらターン数をカウント
+    if (idx === order.length - 1) {
+      //turnカウンターを増やす
+      global.turnCounter[player.room]++;
+
+      console.log(`Room ${player.room} の経過ターン数: ${global.turnCounter[player.room]}`);
+
+      // 指定したターン数に達したら昼夜切替
+      const switchTurn = 2;  // ここで指定ターン数
+      // turn数がswitchTurnを越せばフェーズ切り替え処理
+      if (global.turnCounter[player.room] >= switchTurn) {
+        // フェーズを切り替え
+        global.phase[player.room] = (global.phase[player.room] === "day" ? "night" : "day");
+        global.turnCounter[player.room] = 0;  // リセット
+
+        console.log("フェーズ自動切替:", global.phase[player.room]);
+        // 全員にフェーズ変更を通知
+        io.of('/game').to(player.room).emit("phaseChanged", { phase: global.phase[player.room] });
+      }
+    }
   });
 
   //killイベント

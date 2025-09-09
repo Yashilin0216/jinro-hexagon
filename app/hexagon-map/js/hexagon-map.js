@@ -66,7 +66,9 @@ socket.emit("join", {
      q: player.q,      
      r: player.r,
      // 生きてるか判定
-     is_alive: player.is_alive
+     is_alive: player.is_alive,
+     // 初期化フェーズ
+     phase: phase.value
 });
 
 // サーバーから現在のターン情報を受信
@@ -127,7 +129,6 @@ socket.on("phaseChanged", (msg) => {
 });
 
 // Vue 3 アプリの作成
-//const vm = はデバッグ用につけた。別にいらない。
 const vm = createApp({
   setup() {
 
@@ -282,6 +283,11 @@ const vm = createApp({
 
     // 他のプレイヤーを殺す関数
     function kill_player(playerId){
+      // 夜だけkillできる。昼はできない
+      if(phase.value == "day"){ 
+        console.log("昼なのでkillできません。")
+        return;
+      }
       players[playerId].is_alive = false;
       console.log("kill_player: "+playerId)
       socket.emit("kill", {playerId: playerId})
