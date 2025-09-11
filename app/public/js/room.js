@@ -1,6 +1,7 @@
 const room = document.getElementById("room");
 const user_name = document.getElementById("user_name");
 const move_condition = document.getElementById("move_conditions");
+const role_condition = document.getElementById("role_conditions");
 
 document.getElementById("room-post").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -18,5 +19,7 @@ document.getElementById("room-post").addEventListener("submit", (e) => {
     "&name=" +
     user_name.value +
     "&move_condition=" + 
-    move_condition.value;
+    move_condition.value +
+    "&role_condition=" + 
+    role_condition.value;
 });

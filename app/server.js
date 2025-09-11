@@ -10,6 +10,7 @@ const path = require("path");
 // app.use(express.static('public'))
 // → 「すべてのパス / に対して、publicフォルダからファイルを探して返す」
 // 上から順番にそのディレクトリから検索しているイメージ
+// app.use(express.static('public')) によって public/index.html が「デフォルトのトップページ」になる
 app.use(express.static('public'));
 
 // test用ディレクトリ 今後のテスト用にも一応残す

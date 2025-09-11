@@ -11,10 +11,6 @@ export class RoleRestriction {
         Math.abs(a.r - b.r)) / 2
     );
   }
-
-  canMove(player, target, conditions) {
-    return true;
-  }
 }
 
 

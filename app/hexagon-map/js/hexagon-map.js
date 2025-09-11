@@ -19,12 +19,13 @@ socket.on("connect", () => {
 console.log("ゲーム接続成功:", socket.id);
 });
 
-// URLパラメータからroomId, nameを取得（チャットと同じ要領）
+// URLパラメータから情報・属性を取得
 const url = new URL(window.location.href);
 const params = url.searchParams;
 const urlRoomId = parseInt(params.get("roomId")) || 0;
 const urlName = params.get("name") || "player";
 const urlMoveCondition = params.get("move_condition");
+const urlRoleCondition = params.get("role_condition");
 
 // 設定値（反応型）
 const cfg = reactive({ hex_size: 28, map_size: 11, margin: 24 }); // 六角形サイズ・盤面列数・行数・余白
