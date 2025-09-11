@@ -1,7 +1,8 @@
 // 基底クラス（制限条件付きの行動判定）
 export class RoleRestriction {
-  constructor(conditions) {
+  constructor(radius,conditions) {
     this.conditions = conditions;
+    this.radius = radius;
   }
 
   distance(a, b) {
@@ -11,18 +12,23 @@ export class RoleRestriction {
         Math.abs(a.r - b.r)) / 2
     );
   }
+  canDo(player, target, conditions){
+    return false;
+  }
 }
+
+// 役職無し 村人
+export class NonRole extends RoleRestriction{}
 
 
 // 攻撃役職（指定範囲のプレイヤーをkillできる）
 export class KillerRole extends RoleRestriction {
   constructor(radius, conditions) {
-    super(conditions);
-    this.radius = radius;
+    super(radius,conditions);
   }
 
   // プレイヤーが指定範囲内にいればkill可能
-  canKill(player, target, conditions) {
+  canDo(player, target, conditions) {
     const d = this.distance(player, target);
     return d <= this.radius && this.conditions === conditions;
   }
@@ -37,12 +43,11 @@ export class KillerRole extends RoleRestriction {
 // 防御役職（指定範囲内の味方を守れる）
 export class ProtectorRole extends RoleRestriction {
   constructor(radius, conditions) {
-    super(conditions);
-    this.radius = radius;
+    super(radius,conditions);
   }
 
   // 指定範囲内のプレイヤーを守れるかどうか
-  canProtect(player, target, conditions) {
+  canDo(player, target, conditions) {
     const d = this.distance(player, target);
     return d <= this.radius && this.conditions === conditions;
   }

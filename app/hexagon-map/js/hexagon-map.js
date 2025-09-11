@@ -10,6 +10,13 @@ const three_restriction = new RadiusRestriction(3, "three_restriction");
 // 1マス動ける
 const one_restriction = new RadiusRestriction(1, "one_restriction");
 
+// 役職の制限用クラス
+import { NonRole, KillerRole, ProtectorRole} from "./role_restrictions.js";
+
+// 役職のインスタンス化
+const non_role = new NonRole(2,"non_role");
+const killer_role = new KillerRole(2, "killer_role");
+const protect_role = new ProtectorRole(2, "protect_role");
 
 // ソケット接続を/game namespace 
 
@@ -46,7 +53,9 @@ const player = reactive({
   // 移動制限
   move_condition: urlMoveCondition,
   // 生きてるか判定 
-  is_alive: true
+  is_alive: true,
+  // 守られている状態か
+  is_protected: false
 });
 
 // 他プレイヤー一覧
@@ -68,6 +77,8 @@ socket.emit("join", {
      r: player.r,
      // 生きてるか判定
      is_alive: player.is_alive,
+     // 守られている状態か判定
+     is_protected: player.is_protected,
      // 初期化フェーズ
      phase: phase.value
 });
@@ -305,6 +316,18 @@ const vm = createApp({
       return playerId;
     }
 
+    // 他プレイヤーが指定座標にいるかどうかを判定する関数
+    function isOccupied(q, r) {
+      // players は { socketId: { q, r, name }, ... } の形式を想定
+      for (const id in players) {
+        const p = players[id];
+        if (p.q === q && p.r === r) {
+          return true; // 1人でもいたら true
+        }
+      }
+      return false; // 誰もいなければ false
+    }
+
     // 背景を切り替える関数
     function updateBackground() {
       if (phase.value === "day") {
@@ -397,7 +420,7 @@ const vm = createApp({
 
     return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼
-            players, render_players, move_condition_check, kill_player, kill_mine, identify_id, phase, togglePhase, updateBackground
+            players, render_players, move_condition_check, kill_player, kill_mine, identify_id, phase, togglePhase, updateBackground, isOccupied
      };
   }
 }).mount('#app');
