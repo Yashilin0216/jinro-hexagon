@@ -35,12 +35,12 @@ const urlMoveCondition = params.get("move_condition");
 const urlRoleCondition = params.get("role_condition");
 
 // 設定値（反応型）
-const cfg = reactive({ hex_size: 28, map_size: 11, margin: 24 }); // 六角形サイズ・盤面列数・行数・余白
+const highlight_radius = ref(5); // 半径
+const cfg = reactive({ hex_size: 28, map_size: (highlight_radius.value)*2 + 1, margin: 24 }); // 六角形サイズ・盤面列数・行数・余白
 const camera = reactive({ x: 0, y: 0}); // カメラ位置（SVGの平行移動に使用）
 const selected = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 選択中のセル(axial座標) playerとほぼ同じ論理なのに置き換えるとバグる。Cannot read properties of undefined (reading 'q').なぜ？
 const hover = ref(null); // ホバー中のセル情報
 const highlight_center = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 中心セル 色付けテスト用（緑）
-const highlight_radius = ref(5); // 半径 中心除いてｎマス 中心入れてn+1マス 色付けテスト用（緑）
 const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" または "night"）
 
 
