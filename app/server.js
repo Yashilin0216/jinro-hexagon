@@ -43,10 +43,19 @@ app.get("/game", (req, res) => {
 // -----------------
 // ゲーム用Socket
 // -----------------
-const gamePlayers = {};
+let gamePlayers = {};
 let turnOrder = {};   // ルームごとのターン順 { roomId: [name1, name2, ...] }
 let turnIndex = {};   // ルームごとの現在ターンインデックス { roomId: idx }
 
+// 六方向ベクトル
+const dirs = [
+  { q: +1, r: 0 },   // 東
+  { q: +1, r: -1 },  // 北東
+  { q: 0,  r: -1 },  // 北西
+  { q: -1, r: 0 },   // 西
+  { q: -1, r: +1 },  // 南西
+  { q: 0,  r: +1 },  // 南東
+];
 
 io.of('/game').on("connection", (socket) => {
   console.log("[game] user connected", socket.id);
@@ -67,8 +76,7 @@ io.of('/game').on("connection", (socket) => {
       .map(([id, p]) => ({ playerId: id, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive  }));
     socket.emit('init_players', others);
 
-    // 既存プレイヤーに新規参加者情報を通知
-    socket.to(msg.roomId).emit('init_players', [{ playerId: socket.id, q: msg.q, r: msg.r, name: msg.name, is_alive: msg.is_alive }]);
+
 
     //ターン順を辞書順で管理
     const names = Object.values(gamePlayers)
@@ -78,6 +86,26 @@ io.of('/game').on("connection", (socket) => {
 
     turnOrder[msg.roomId] = names;
     if (!(msg.roomId in turnIndex)) turnIndex[msg.roomId] = 0;
+
+    // 自分の順番（index）を turnOrder から取得
+    const myidx = turnOrder[msg.roomId].indexOf(msg.name);
+
+    // 初期位置を再度初期化する為の変数
+    let initialPos;
+    // 六人以下の時六方向にプレイヤーをばらけさせて再度初期化
+    if (myidx < 6) {
+      const dir = dirs[myidx];
+      initialPos = { q: msg.q + dir.q * msg.radius, r: msg.r + dir.r * msg.radius };
+      // 再定義、このためにconstからletにした。なにか不具合あるかも？
+      gamePlayers[socket.id] = { room: msg.roomId, name: msg.name, q: initialPos.q, r: initialPos.r, is_alive: msg.is_alive };
+
+      // 自分に対して初期位置の再定義を通知
+      socket.emit('initialPos',initialPos);
+    }
+
+    // 既存プレイヤーに新規参加者情報を通知
+    socket.to(msg.roomId).emit('init_players', [{ playerId: socket.id, q: gamePlayers[socket.id].q, r: gamePlayers[socket.id].r, name: msg.name, is_alive: msg.is_alive }]);
+
     //現在のターンを全員に通知
     io.of('/game').to(msg.roomId).emit("turn", { current: turnOrder[msg.roomId][turnIndex[msg.roomId]] });
 

@@ -40,7 +40,7 @@ const cfg = reactive({ hex_size: 28, map_size: (highlight_radius.value)*2 + 1, m
 const camera = reactive({ x: 0, y: 0}); // カメラ位置（SVGの平行移動に使用）
 const selected = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 選択中のセル(axial座標) playerとほぼ同じ論理なのに置き換えるとバグる。Cannot read properties of undefined (reading 'q').なぜ？
 const hover = ref(null); // ホバー中のセル情報
-const highlight_center = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 中心セル 色付けテスト用（緑）
+const highlight_center = reactive({ q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }); // 中心セル 
 const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" または "night"）
 
 
@@ -80,13 +80,24 @@ socket.emit("join", {
      // 守られている状態か判定
      is_protected: player.is_protected,
      // 初期化フェーズ
-     phase: phase.value
+     phase: phase.value,
+     //
+     radius: highlight_radius.value
 });
+
+// サーバー側で初期位置（真ん中）を六方向に散らばる方に再定義するのでそれを受信
+socket.on("initialPos",(initialPos) =>{
+  // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
+  player.q = initialPos.q;
+  player.r = initialPos.r;
+  selected.q = initialPos.q;
+  selected.r = initialPos.r;
+})
 
 // サーバーから現在のターン情報を受信
 socket.on("turn", (data) => {
-currentTurn.value = data.current;
-console.log("現在のターン:", data.current);
+  currentTurn.value = data.current;
+  console.log("現在のターン:", data.current);
 });
 
 // 既存プレイヤー情報を受信
