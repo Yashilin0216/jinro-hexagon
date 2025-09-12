@@ -34,7 +34,7 @@ export class KillerRole extends RoleRestriction {
   }
 
   // kill実行処理
-  kill(target) {
+  Do(target) {
     target.is_alive = false; // プレイヤーオブジェクトにis_aliveフラグを持たせる
   }
 }
@@ -53,11 +53,11 @@ export class ProtectorRole extends RoleRestriction {
   }
 
   // 実際に守る処理
-  protect(target) {
+  Do(target) {
     target.is_protected = true; // プレイヤーオブジェクトにis_protectedフラグを持たせる
   }
 
-  not_protect(target){
+  unDo(target){
     target.is_protected = false; // プレイヤーオブジェクトのis_protectedフラグ解除
   }
 }

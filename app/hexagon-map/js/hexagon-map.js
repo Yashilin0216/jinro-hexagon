@@ -112,11 +112,9 @@ socket.on('init_players', (list) => {
 
 // 他プレイヤーの移動を受信
 socket.on("move", (data) => {
-  if (players[data.playerId]) {
-    players[data.playerId].q = data.q;
-    players[data.playerId].r = data.r;
-  } else {
-    players[data.playerId] = data;
+  const movingPlayer = players[data.playerId];
+  if (movingPlayer) {
+    movingPlayer.setPosition(data.q, data.r);
   }
 });
 
@@ -124,11 +122,12 @@ socket.on("kill",(data) =>{
   // playersはあくまで他のプレイヤーのリストで自分は含まれないのでこのような処理となる
   if(socket.id != data.playerId){
     //殺した人間と殺された人間以外はここで死亡判定 kill_playerの処理はいらないかも
-    players[data.playerId].is_alive = false;
-    console.log(players[data.playerId].name+"が死にました。")
+    const killedPlayer = players[data.playerId];
+    killedPlayer.die();
+    console.log(players[data.playerId].name+"が死にました。");
   }else{
     //別プレイヤーから自分が殺されたときはここで死亡判定
-    player.is_alive = false;
+    player.die();
     console.log(player.name+"が死にました。(殺された)")
   }
 })
