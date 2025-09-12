@@ -13,6 +13,9 @@ const one_restriction = new RadiusRestriction(1, "one_restriction");
 // 役職の制限用クラス
 import { NonRole, KillerRole, ProtectorRole} from "./role_restrictions.js";
 
+// Playerクラス
+import { Player } from './player.js'; 
+
 // 役職のインスタンス化
 const non_role = new NonRole(2,"non_role");
 const killer_role = new KillerRole(2, "killer_role");
@@ -45,18 +48,12 @@ const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" ま
 
 
 // 自分のプレイヤー情報を定義 
-const player = reactive({ 
-  // 初期座標
-  q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2, 
-  // ユーザーネーム
-  name: urlName, 
-  // 移動制限
-  move_condition: urlMoveCondition,
-  // 生きてるか判定 
-  is_alive: true,
-  // 守られている状態か
-  is_protected: false
-});
+// Playerクラスのインスタンスを生成し、reactiveでラップする
+const player = reactive(new Player(
+  urlName,
+  urlMoveCondition,
+  { q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }
+));
 
 // 他プレイヤー一覧
 const players = reactive({});
@@ -88,8 +85,7 @@ socket.emit("join", {
 // サーバー側で初期位置（真ん中）を六方向に散らばる方に再定義するのでそれを受信
 socket.on("initialPos",(initialPos) =>{
   // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
-  player.q = initialPos.q;
-  player.r = initialPos.r;
+  player.setPosition(initialPos.q, initialPos.r);
   selected.q = initialPos.q;
   selected.r = initialPos.r;
 })
@@ -266,14 +262,14 @@ const vm = createApp({
         console.log("他プレイヤーのターンです。操作できません。");
         return;
       }
-      
+      // メインの移動イベント処理
       // is_bondsで盤面か判断。three_restriction.canMoveで半径3以内か判定
-      if (in_bounds(ar.q, ar.r)) {
+      if (in_bounds(ar.q, ar.r) && !isOccupied(ar.q, ar.r)) {
         if(move_condition_check(player, { q: ar.q, r: ar.r }, player.move_condition)){
           if(player.is_alive){
             // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
             selected.q = ar.q; selected.r = ar.r; 
-            player.q = ar.q; player.r = ar.r;
+            player.setPosition(ar.q, ar.r);
           }else{
             console.log("死亡しているので動けません")
           }
@@ -281,6 +277,8 @@ const vm = createApp({
           // ▼▼▼ 追加：サーバーに送信 ▼▼▼
           socket.emit("move", { q: ar.q, r: ar.r });
         }
+      }else{
+        console.log("移動できない場所です")
       }
       if(!player.is_alive) console.log("死んでいます")
       console.log(players);
@@ -327,13 +325,13 @@ const vm = createApp({
       return playerId;
     }
 
-    // 他プレイヤーが指定座標にいるかどうかを判定する関数
+    // 他プレイヤーが指定座標にいるかどうかを判定する関数 居たらそのプレイヤーの情報が返り値となる
     function isOccupied(q, r) {
       // players は { socketId: { q, r, name }, ... } の形式を想定
       for (const id in players) {
         const p = players[id];
         if (p.q === q && p.r === r) {
-          return true; // 1人でもいたら true
+          return p; // 1人でもいたら true
         }
       }
       return false; // 誰もいなければ false
@@ -350,7 +348,7 @@ const vm = createApp({
       }
     }
 
-    // フェーズをトグル（切り替え）
+    // フェーズを切り替え
     function togglePhase() {
       phase.value = (phase.value === "day" ? "night" : "day");
       updateBackground();
