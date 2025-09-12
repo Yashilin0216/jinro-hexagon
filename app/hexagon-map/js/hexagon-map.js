@@ -258,7 +258,7 @@ const vm = createApp({
 
 
       // 自分のターンでなければ操作できない
-      if (player.name !== currentTurn.value) {
+      if (!player.isMyTurn(currentTurn.value)) {
         console.log("他プレイヤーのターンです。操作できません。");
         return;
       }

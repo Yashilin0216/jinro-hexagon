@@ -16,9 +16,13 @@ export class Player {
   }
 
   
-  // 座標を更新するメソッド（既存のコードを少し綺麗にできる）
-  setPosition(q, r) {
-    this.q = q;
-    this.r = r;
-  }
+    // 座標を更新するメソッド
+    setPosition(q, r) {
+        this.q = q;
+        this.r = r;
+    }
+    // 自分のターンか判定するメソッド
+    isMyTurn(currentTurnName) {
+        return this.name === currentTurnName;
+    }
 }
