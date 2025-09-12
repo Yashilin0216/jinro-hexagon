@@ -1,25 +1,15 @@
 // めも "そのうち消す"のコメントを早めに消す
 const { createApp, ref, reactive, computed, onMounted } = Vue;
 
-// 行動制限用クラス
-import { RadiusRestriction } from "./move_restrictions.js";
-
-// urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture move_condition_check()で実際の論理値判定
-// 3マス動ける
-const three_restriction = new RadiusRestriction(3, "three_restriction");
-// 1マス動ける
-const one_restriction = new RadiusRestriction(1, "one_restriction");
-
-// 役職の制限用クラス
-import { NonRole, KillerRole, ProtectorRole} from "./role_restrictions.js";
+// 移動制限のインスタンスをまとめてある
+import { movementAbilities } from "./instance/move_abilities.js";
+// 役職のインスタンスをまとめてある
+import { roleAbilities } from "./instance/role_abilities.js";
 
 // Playerクラス
 import { Player } from './player.js'; 
 
-// 役職のインスタンス化
-const non_role = new NonRole(2,"non_role");
-const killer_role = new KillerRole(2, "killer_role");
-const protect_role = new ProtectorRole(2, "protect_role");
+
 
 // ソケット接続を/game namespace 
 
@@ -52,7 +42,10 @@ const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" ま
 const player = reactive(new Player(
   urlName,
   urlMoveCondition,
-  { q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 }
+  // 座標
+  { q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 },
+  // urlクエリのパラメータと移動範囲のインスタンスを照合
+  movementAbilities[urlMoveCondition]
 ));
 
 // 他プレイヤー一覧
@@ -265,7 +258,8 @@ const vm = createApp({
       // メインの移動イベント処理
       // is_bondsで盤面か判断。three_restriction.canMoveで半径3以内か判定
       if (in_bounds(ar.q, ar.r) && !isOccupied(ar.q, ar.r)) {
-        if(move_condition_check(player, { q: ar.q, r: ar.r }, player.move_condition)){
+        // 実際に動けるかの判定
+        if(player.canMoveTo({ q: ar.q, r: ar.r })){
           if(player.is_alive){
             // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
             selected.q = ar.q; selected.r = ar.r; 
@@ -286,6 +280,7 @@ const vm = createApp({
     }
 
 
+    // そのうち消すかも
     // urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture
     function move_condition_check(player, target, move_condition){
       return(
