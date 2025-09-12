@@ -39,6 +39,7 @@ const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" ま
 
 // 自分のプレイヤー情報を定義 
 // Playerクラスのインスタンスを生成し、reactiveでラップする
+// playerDataとして渡す
 const player = reactive(new Player({
   name: urlName,
   q: (cfg.map_size - 1) / 2,
@@ -91,13 +92,22 @@ socket.on("turn", (data) => {
 // 既存プレイヤー情報を受信
 socket.on("init_players", (others) => {
   others.forEach((p) => {
-    players[p.playerId] = p;
+    //{ playerId: id, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive  } として送られてくる
+    // {name: urlName,q: (cfg.map_size - 1) / 2,r: (cfg.map_size - 1) / 2,move_condition: urlMoveCondition,movementAbility: movementAbilities[urlMoveCondition] }
+    // みたいな形にplayerクラスに合わせてプロパティ名を合わせる
+    const playerData = { id: p.playerId, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive };
+    players[p.playerId] = reactive(new Player(playerData));
+
   });
 });
 
 // 新規プレイヤー情報を受信
 socket.on('init_players', (list) => {
-  list.forEach(p => players[p.playerId] = { q: p.q, r: p.r, name: p.name });
+  list.forEach(p => {
+    // 既存プレイヤー情報を受信と同じ記述
+    const playerData = { id: p.playerId, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive };
+    players[p.playerId] = reactive(new Player(playerData));
+  });
 });
 
 // 他プレイヤーの移動を受信
