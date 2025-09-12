@@ -1,12 +1,12 @@
 export class Player {
   // コンストラクタでプレイヤーの初期データを設定
-  constructor(name, move_condition, initialPosition,movementAbility) {
+  constructor(playerData) {
     // --- 現在のplayer連想配列と同じプロパティを持たせる ---
-    this.name = name;
-    this.move_condition = move_condition;
+    this.name = playerData.name;
+    this.move_condition = playerData.move_condition;
 
-    this.q = initialPosition.q; // 初期座標
-    this.r = initialPosition.r; // 初期座標
+    this.q = playerData.q; // 初期座標
+    this.r = playerData.r; // 初期座標
 
     this.is_alive = true;      // 生存状態
     this.is_protected = false;   // 防御状態
@@ -15,7 +15,7 @@ export class Player {
     this.id = null;
 
     // 移動能力インスタンスを保持
-    this.movement = movementAbility; 
+    this.movement = playerData.movementAbility; 
   }
 
   
@@ -34,5 +34,11 @@ export class Player {
         // this.movement.canMove の引数が (player, target, conditions) の場合
         // 第1引数には自分自身(this)を渡す
         return this.movement.canMove(this, targetPosition, this.move_condition);
+    }
+    // 自身の死亡判定
+    die() {
+        this.is_alive = false;
+        console.log(`${this.name}は倒れた。`);
+        // 今後、死亡時に見た目を灰色にするなどの処理もここに追加できる
     }
 }

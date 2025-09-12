@@ -39,14 +39,13 @@ const phase = reactive({ value: "night" }); // 現在のフェーズ（"day" ま
 
 // 自分のプレイヤー情報を定義 
 // Playerクラスのインスタンスを生成し、reactiveでラップする
-const player = reactive(new Player(
-  urlName,
-  urlMoveCondition,
-  // 座標
-  { q: (cfg.map_size-1)/2, r: (cfg.map_size-1)/2 },
-  // urlクエリのパラメータと移動範囲のインスタンスを照合
-  movementAbilities[urlMoveCondition]
-));
+const player = reactive(new Player({
+  name: urlName,
+  q: (cfg.map_size - 1) / 2,
+  r: (cfg.map_size - 1) / 2,
+  move_condition: urlMoveCondition,
+  movementAbility: movementAbilities[urlMoveCondition] 
+}));
 
 // 他プレイヤー一覧
 const players = reactive({});
@@ -280,21 +279,12 @@ const vm = createApp({
     }
 
 
-    // そのうち消すかも
-    // urlのパラメータのmove_conditionとインスタンス化した時のmove_conditionが一致すればture
-    function move_condition_check(player, target, move_condition){
-      return(
-          three_restriction.canMove(player, target, move_condition) ||
-          one_restriction.canMove(player, target, move_condition)
-      );
-    }
 
     //自分を殺す関数
     // 自分のプレイヤー情報にはsocket.idが入ってない
     function kill_mine(){
-      player.is_alive = false;
-      console.log("kill_mine: "+socket.id)
-      socket.emit("kill", {playerId: socket.id})
+      player.die(); // メソッドを呼び出す
+      socket.emit("kill", {playerId: socket.id});
     }
 
     // 他のプレイヤーを殺す関数
@@ -424,7 +414,7 @@ const vm = createApp({
 
     return { cfg, grid, selected, hover, camera, view_box, pos_px, hex_points, tile_fill, is_selected, on_mouse_move, on_click, board_ref,axial_to_pixel,
             // ▼▼▼ 追加 ▼▼▼
-            players, render_players, move_condition_check, kill_player, kill_mine, identify_id, phase, togglePhase, updateBackground, isOccupied
+            players, render_players, kill_player, kill_mine, identify_id, phase, togglePhase, updateBackground, isOccupied
      };
   }
 }).mount('#app');
