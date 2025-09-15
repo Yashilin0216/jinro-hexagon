@@ -196,6 +196,10 @@ io.of('/game').on("connection", (socket) => {
           targetPlayer.is_alive = result.targetState.is_alive;
           targetPlayer.is_protected = result.targetState.is_protected;
       }
+      // action結果をクライアント側に送信
+      io.of('/game').to(room).emit("actionResult", {id: result.targetId, is_alive: targetPlayer.is_alive, is_protected: targetPlayer.is_protected});
+
+      // 死亡している時はターンから排除する処理を行う
       if(!targetPlayer.is_alive){
         // 死亡した際、ターンの中から除外する
         delete gamePlayers[result.targetId];
@@ -213,7 +217,7 @@ io.of('/game').on("connection", (socket) => {
         io.of('/game').to(room).emit("turn", { current: names[turnIndex[room]] });
       }
 
-      io.of('/game').to(room).emit("actionResult", {id: result.targetId, is_alive: targetPlayer.is_alive, is_protected: targetPlayer.is_protected});
+      
   });
 
   // フェーズ切り替えを受信
