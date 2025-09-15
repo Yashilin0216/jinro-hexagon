@@ -12,7 +12,7 @@ export class RoleRestriction {
         Math.abs(a.r - b.r)) / 2
     );
   }
-  canDo(player, target, conditions){
+  canDo(player, target, conditions, gamePhase){
     return false;
   }
 }
@@ -28,7 +28,11 @@ export class KillerRole extends RoleRestriction {
   }
 
   // プレイヤーが指定範囲内にいればkill可能
-  canDo(player, target, conditions) {
+  canDo(player, target, conditions, gamePhase) {
+    // 「夜であること」という条件
+    if (gamePhase !== 'night') {
+      return false;
+    }
     const d = this.distance(player, target);
     return d <= this.radius && this.conditions === conditions;
   }
@@ -47,7 +51,7 @@ export class ProtectorRole extends RoleRestriction {
   }
 
   // 指定範囲内のプレイヤーを守れるかどうか
-  canDo(player, target, conditions) {
+  canDo(player, target, conditions, gamePhase) {
     const d = this.distance(player, target);
     return d <= this.radius && this.conditions === conditions;
   }

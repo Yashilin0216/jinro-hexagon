@@ -74,7 +74,7 @@ io.of('/game').on("connection", (socket) => {
     const others = Object.entries(gamePlayers)
       .filter(([id, p]) => p.room === msg.roomId && id !== socket.id)
       .map(([id, p]) => ({ playerId: id, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive  }));
-    socket.emit('init_players', others);
+    socket.emit('init_others', others);
 
 
 
@@ -184,6 +184,35 @@ io.of('/game').on("connection", (socket) => {
     io.of('/game').to(room).emit("turn", { current: names[turnIndex[room]] });
     
   })
+
+  // kill protect などアクションを受信
+  socket.on('actionResult', (result) => {
+      console.log('アクション結果を受信:', result);
+      const targetPlayer = gamePlayers[result.targetId];
+      const room = targetPlayer.room;
+      console.log("actionResult",targetPlayer);
+      if (targetPlayer) {
+          // サーバーから送られてきた最新の状態で上書きする
+          targetPlayer.is_alive = result.targetState.is_alive;
+          targetPlayer.is_protected = result.targetState.is_protected;
+      }
+      // 死亡した際、ターンの中から除外する
+      delete gamePlayers[result.targetId];
+      io.of('/game').to(room).emit('player_death', { playerId: result.targetId});
+
+
+      // 死んだプレイヤーを除いて順番を組み直し
+      const names = Object.values(gamePlayers)
+        .filter(p => p.room === room)
+        .map(p => p.name)
+        .sort((a, b) => a.localeCompare(b));
+      turnOrder[room] = names;
+      if (turnIndex[room] >= names.length) turnIndex[room] = 0;
+
+      io.of('/game').to(room).emit("turn", { current: names[turnIndex[room]] });
+
+      io.of('/game').to(room).emit("actionResult", {id: result.targetId, is_alive: targetPlayer.is_alive, is_protected: targetPlayer.is_protected});
+  });
 
   // フェーズ切り替えを受信
   socket.on("changePhase", (msg) => {

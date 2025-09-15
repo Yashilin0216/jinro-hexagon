@@ -45,7 +45,9 @@ const player = reactive(new Player({
   q: (cfg.map_size - 1) / 2,
   r: (cfg.map_size - 1) / 2,
   move_condition: urlMoveCondition,
-  movementAbility: movementAbilities[urlMoveCondition] 
+  movementAbility: movementAbilities[urlMoveCondition],
+  role_condition: urlRoleCondition,
+  role: roleAbilities[urlRoleCondition] 
 }));
 
 // 他プレイヤー一覧
@@ -90,13 +92,14 @@ socket.on("turn", (data) => {
 });
 
 // 既存プレイヤー情報を受信
-socket.on("init_players", (others) => {
+socket.on("init_others", (others) => {
   others.forEach((p) => {
     //{ playerId: id, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive  } として送られてくる
     // {name: urlName,q: (cfg.map_size - 1) / 2,r: (cfg.map_size - 1) / 2,move_condition: urlMoveCondition,movementAbility: movementAbilities[urlMoveCondition] }
     // みたいな形にplayerクラスに合わせてプロパティ名を合わせる
     const playerData = { id: p.playerId, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive };
     players[p.playerId] = reactive(new Player(playerData));
+    console.log("init_others",players[p.playerId]);
 
   });
 });
@@ -106,7 +109,9 @@ socket.on('init_players', (list) => {
   list.forEach(p => {
     // 既存プレイヤー情報を受信と同じ記述
     const playerData = { id: p.playerId, q: p.q, r: p.r, name: p.name, is_alive: p.is_alive };
+    console.log("新規プレイヤー情報を受信",playerData);
     players[p.playerId] = reactive(new Player(playerData));
+    console.log("init_players",players[p.playerId]);
   });
 });
 
@@ -147,6 +152,21 @@ socket.on("phaseChanged", (msg) => {
   phase.value = msg.phase;
   vm.updateBackground();
 });
+
+// サーバーからアクション結果を受け取る
+socket.on("actionResult", (targetPlayer) => {
+  console.log("socket.on actionResult socket.id",socket.id);
+  console.log("socket.on actionResult targetPlayer",targetPlayer);
+  if(socket.id != targetPlayer.id){
+    // ここの時すでに死亡プレイヤーはソケット通信が切断され、player_deathでクライアント側からも消されるのでいらないかも。エラー出る
+    players[targetPlayer.id].is_alive = targetPlayer.is_alive;
+    players[targetPlayer.id].is_protected = targetPlayer.is_protected;
+  }else{
+    //別プレイヤーから自分が殺されたときはここで死亡判定
+    player.die();
+    console.log(player.name+"が死にました。(殺された)")
+  }
+})
 
 // Vue 3 アプリの作成
 const vm = createApp({
@@ -263,28 +283,43 @@ const vm = createApp({
         console.log("他プレイヤーのターンです。操作できません。");
         return;
       }
-      // メインの移動イベント処理
-      // is_bondsで盤面か判断。three_restriction.canMoveで半径3以内か判定
-      if (in_bounds(ar.q, ar.r) && !isOccupied(ar.q, ar.r)) {
-        // 実際に動けるかの判定
-        if(player.canMoveTo({ q: ar.q, r: ar.r })){
-          if(player.is_alive){
-            // 移動判定を更新するにはselectedとplayerどちらも更新しなければならない
-            selected.q = ar.q; selected.r = ar.r; 
-            player.setPosition(ar.q, ar.r);
-          }else{
-            console.log("死亡しているので動けません")
-          }
-          //死亡している場合更新せずに動く処理が行われるが、サーバー側でも更新されないので問題なし
-          // ▼▼▼ 追加：サーバーに送信 ▼▼▼
-          socket.emit("move", { q: ar.q, r: ar.r });
+
+      if (!in_bounds(ar.q, ar.r)) return; // 盤面外なら終了
+      
+      // クリックしたタイルに他のプレイヤーがいるか確認
+      const targetPlayer = isOccupied(ar.q, ar.r);
+
+      if (targetPlayer) {
+        // プレイヤーがいる場合, 役職能力の行使を試みる
+        console.log(`${targetPlayer.name}にアクションを試みます`);
+        
+        // Playerクラスのメソッドを呼び出す
+        const actionSuccess = player.performRoleAction(targetPlayer, phase.value);
+
+        if (actionSuccess) {
+          // サーバーにアクションを通知する
+          console.log(targetPlayer,"サーバーにアクションを通知する")
+          socket.emit('actionResult', {
+            targetId: targetPlayer.id,
+            actionType: player.role_condition, // 'killer_role' or 'protect_role'
+            targetState: {
+              is_alive: targetPlayer.is_alive,
+              is_protected: targetPlayer.is_protected
+            }
+          });
+          console.log("アクション成功。サーバーに通知しました。");
         }
-      }else{
-        console.log("移動できない場所です")
+
+      } else {
+        // プレイヤーがいない場合, 通常の移動処理
+        if (player.canMoveTo({ q: ar.q, r: ar.r })) {
+          player.setPosition(ar.q, ar.r);
+          selected.q = ar.q; selected.r = ar.r;
+          socket.emit("move", { q: ar.q, r: ar.r });
+        } else {
+          console.log("その場所へは移動できません");
+        }
       }
-      if(!player.is_alive) console.log("死んでいます")
-      console.log(players);
-      console.log(player);
     }
 
 
@@ -325,6 +360,7 @@ const vm = createApp({
       for (const id in players) {
         const p = players[id];
         if (p.q === q && p.r === r) {
+          console.log("isOccupied",p);
           return p; // 1人でもいたら true
         }
       }
