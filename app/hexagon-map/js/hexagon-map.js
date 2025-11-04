@@ -150,6 +150,10 @@ socket.on("player_death", (data) =>{
 // サーバーからフェーズ変更を受信
 socket.on("phaseChanged", (msg) => {
   phase.value = msg.phase;
+  // 昼夜切り替え時に全員の保護を解除
+  for (const id of Object.keys(players)) {
+    players[id].is_protected = false;
+  }
   vm.updateBackground();
 });
 

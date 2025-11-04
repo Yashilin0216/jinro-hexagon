@@ -227,6 +227,10 @@ io.of('/game').on("connection", (socket) => {
     const player = gamePlayers[socket.id];
     const room = player.room;
     console.log("phase changed to", msg.phase);
+    // 昼夜切り替え時に全員の保護を解除
+    for (const p of Object.values(gamePlayers)) {
+      if (p.room === player.room) p.is_protected == false;
+    }
     // 全クライアントに通知
     io.of('/game').to(room).emit("phaseChanged", msg);
   });
