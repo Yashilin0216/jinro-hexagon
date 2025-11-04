@@ -95,7 +95,9 @@ io.of('/game').on("connection", (socket) => {
     // 六人以下の時六方向にプレイヤーをばらけさせて再度初期化
     if (myidx < 6) {
       const dir = dirs[myidx];
-      initialPos = { q: msg.q + dir.q * msg.radius, r: msg.r + dir.r * msg.radius };
+      // initialPos = { q: msg.q + dir.q * msg.radius, r: msg.r + dir.r * msg.radius };
+      // デバッグ用で近くする。本当は１じゃなくてmsg.radius
+      initialPos = { q: msg.q + dir.q * 1, r: msg.r + dir.r * 1 };
       // 再定義、このためにconstからletにした。なにか不具合あるかも？
       gamePlayers[socket.id] = { room: msg.roomId, name: msg.name, q: initialPos.q, r: initialPos.r, is_alive: msg.is_alive };
 

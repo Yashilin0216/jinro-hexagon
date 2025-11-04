@@ -68,6 +68,7 @@ export class Player {
         } else {
             // できない場合は、理由をコンソールに出力して失敗を返す
             console.log("能力の使用範囲外か、条件を満たしていません。");
+            if(targetPlayer.is_protected){console.log(`${targetPlayer.name}は守られています`);}
             return false; // アクション失敗
         }
     }

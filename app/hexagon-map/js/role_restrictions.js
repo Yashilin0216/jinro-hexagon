@@ -29,8 +29,8 @@ export class KillerRole extends RoleRestriction {
 
   // プレイヤーが指定範囲内にいればkill可能
   canDo(player, target, conditions, gamePhase) {
-    // 「夜であること」という条件
-    if (gamePhase !== 'night') {
+    // 夜ではない。もしくは守られている時
+    if (gamePhase !== 'night' || target.is_protected) {
       return false;
     }
     const d = this.distance(player, target);

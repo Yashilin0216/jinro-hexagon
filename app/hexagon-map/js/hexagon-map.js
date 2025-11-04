@@ -158,7 +158,7 @@ socket.on("actionResult", (targetPlayer) => {
   console.log("socket.on actionResult socket.id",socket.id);
   console.log("socket.on actionResult targetPlayer",targetPlayer);
   if(socket.id != targetPlayer.id){
-    // ここの時すでに死亡プレイヤーはソケット通信が切断され、player_deathでクライアント側からも消されるのでis_aliveいらないかも。エラー出る
+    // ここの時すでに死亡プレイヤーはソケット通信が切断され、player_deathでクライアント側からも消されるのでis_aliveいらないかも。
     players[targetPlayer.id].is_alive = targetPlayer.is_alive;
     players[targetPlayer.id].is_protected = targetPlayer.is_protected;
   }else{
