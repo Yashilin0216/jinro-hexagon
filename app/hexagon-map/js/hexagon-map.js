@@ -312,6 +312,8 @@ const vm = createApp({
             }
           });
           console.log("アクション成功。サーバーに通知しました。");
+          // 自分がいる位置に移動。移動のイベントでターンが進むので移動していないけど移動していることにしている。
+          socket.emit("move", { q: player.q, r: player.r });
         }
 
       } else {
